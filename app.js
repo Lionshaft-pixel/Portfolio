@@ -261,12 +261,15 @@ function initializeServoControls() {
 
 function getServoApiEndpoint() {
     const vercelApiEndpoint = 'https://portfolio-anukalp-s-projects.vercel.app/api/servo';
+    const hostname = window.location.hostname;
+    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+    const isVercel = hostname.endsWith('.vercel.app');
 
-    if (window.location.hostname.endsWith('github.io')) {
-        return vercelApiEndpoint;
+    if (isLocal || isVercel) {
+        return '/api/servo';
     }
 
-    return '/api/servo';
+    return vercelApiEndpoint;
 }
 
 function handleEntryClick(e) {

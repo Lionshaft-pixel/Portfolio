@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uh-oh!</title>
+    <link rel="stylesheet" href="style.css">
+    <style> /* I'm writing css here because I'm too lazy to create another file. Go fuck yourself. */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #000000;
+            color: #db3b3b;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        p {
+            font-size: 1.2rem;
+        }
+
+        #kitty, #yawn {
+            height: 370px;
+            width: auto;
+            object-fit: contain;
+            cursor: pointer;
+        }
+
+        #yawn {
+            display: none;
+        }
+
+        #kitty:hover {
+            filter:
+            drop-shadow(3px 0 0 white)
+            drop-shadow(-3px 0 0 white)
+            drop-shadow(0 3px 0 white)
+            drop-shadow(0 -3px 0 white)
+        }
+    </style>
+</head>
+<body>
+    <h1>Uh-oh!</h1>
+    <p>This repo isn't public anymoreee :(</p>
+    <img src="kitty.png" id="kitty">
+    <img src="yawn.png" id="yawn">
+    <script>
+        const kitty = document.getElementById('kitty');
+        const yawn = document.getElementById('yawn');
+        let clickCount = 0;
+        let hasTriggered = false;
+
+        kitty.addEventListener('click', () => {
+            if (hasTriggered) {
+                return;
+            }
+
+            clickCount += 1;
+
+            if (clickCount >= 10) {
+                hasTriggered = true;
+                kitty.style.display = 'none';
+                yawn.style.display = 'block';
+
+                setTimeout(() => {
+                    window.location.href = 'game.html';
+                }, 200);
+            }
+        });
+    </script>
+</body>
+</html>

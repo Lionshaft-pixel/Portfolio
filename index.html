@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frank's Portfolio</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@300;400;500;600&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="entry-screen" id="entryScreen">
+        <h1 class="entry-title">Think Different.</h1>
+        <p class="entry-instruction">Click anywhere to continue</p>
+    </div>
+
+    <div class="main-content" id="mainContent">
+        <section class="hero-section">
+            <div class="hero-text">Hey,</div>
+            <div class="hero-name">
+                <span class="hero-name-text">I'm Anukalp</span>
+                <img class="hero-pfp" src="pfp.jpg" alt="Anukalp profile photo" title="YOU REALLY FUCKING THOUGHT I'D FACE REVEAL??">
+            </div>
+            <p class="contact-description">Developer & Creator of innovative tools and applications. Passionate about building solutions that simplify complex problems.</p>
+        </section>
+
+        <section class="livestream-section">
+            <h2 class="section-title">Live Servo Stream</h2>
+            <div class="livestream-container">
+                <img src="https://noah.watch/stream" alt="Live Stream" class="livestream-player" onerror="handleStreamError(this)">
+                <div class="servo-controls">
+                    <div class="control-group">
+                        <label>Servo Controls</label>
+                        <p class="controls-info">Using live controls from noah.watch</p>
+                    </div>
+                    <iframe 
+                        src="https://noah.watch/interactive" 
+                        id="servoIframe"
+                        class="servo-iframe"
+                        title="Servo Controls"
+                        sandbox="allow-same-origin allow-scripts"
+                    ></iframe>
+                </div>
+            </div>
+        </section>
+
+        <section class="repositories-section">
+            <h2 class="section-title">My Projects</h2>
+            <div class="repositories-grid" id="reposGrid">
+            </div>
+        </section>
+
+        <section class="contact-section">
+            <h2 class="contact-title">Get In Touch</h2>
+            <p class="contact-description">Have a project in mind or want to discuss potential collaborations? Feel free to reach out through any of these links :)</p>
+            
+            <div class="contact-links">
+                <a href="mailto:anukalpy52@gmail.com" class="contact-link">
+                    <i class="fas fa-envelope"></i> Email
+                </a>
+                <a href="https://github.com/Lionshaft-pixel" target="_blank" class="contact-link">
+                    <i class="fab fa-github"></i> GitHub
+                </a>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>© 2026 Lionshaft Made with <del>Love</del> FUCKING PAIN AND AGONY</p>
+        </footer>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

@@ -225,7 +225,7 @@ async function postNoahServoCommand(targetUrl, referer, session, value) {
     return {
         status: servoResponse.status,
         data: servoResponse.ok
-            ? { message: 'Command sent to Noah servo.', source: 'noah-servo-api', ...servoData }
+            ? { message: 'Command sent', source: 'noah-servo-api', ...servoData }
             : { source: 'noah-servo-api', ...servoData }
     };
 }

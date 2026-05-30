@@ -458,6 +458,41 @@
             object-fit: cover;
         }
 
+        .stream-latency {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 3;
+            min-width: 72px;
+            padding: 0.35rem 0.55rem;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.72);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #fff;
+            font-weight: 800;
+            font-size: 0.85rem;
+            line-height: 1;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+            backdrop-filter: blur(6px);
+        }
+
+        .stream-latency.latency-good {
+            color: #3cff8f;
+            border-color: rgba(60, 255, 143, 0.55);
+        }
+
+        .stream-latency.latency-warn {
+            color: #ffd447;
+            border-color: rgba(255, 212, 71, 0.55);
+        }
+
+        .stream-latency.latency-bad,
+        .stream-latency.latency-unknown {
+            color: #ff5c5c;
+            border-color: rgba(255, 92, 92, 0.6);
+        }
+
         .stream-warning {
             color: #ff4444;
             font-weight: 800;
@@ -657,6 +692,7 @@
         .livestream-wrapper {
     width: 100%;
     aspect-ratio: 16/9;
+    position: relative;
     border-radius: 12px;
     border: 2px solid #333;
     overflow: hidden;

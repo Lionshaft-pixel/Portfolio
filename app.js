@@ -136,6 +136,7 @@ function initializeServoControls() {
     const rightBtn = document.getElementById('rightBtn');
     const syncStreamBtn = document.getElementById('syncStreamBtn');
     const liveStream = document.getElementById('liveStream');
+    const streamLatency = document.getElementById('streamLatency');
     const controlStatus = document.getElementById('controlStatus');
 
     if (!servoSlider || !angleDisplay || !controlStatus) {
@@ -262,10 +263,75 @@ function initializeServoControls() {
         streamUrl.searchParams.set('sync', String(Date.now()));
         liveStream.src = streamUrl.toString();
         setStatus('Stream synced to latest.', 'success');
+        updateStreamLatency();
+    }
+
+    function setStreamLatency(ms, state = '') {
+        if (!streamLatency) {
+            return;
+        }
+
+        streamLatency.textContent = Number.isFinite(ms) ? `${Math.round(ms)} ms` : '-- ms';
+        streamLatency.className = `stream-latency ${state || getLatencyState(ms)}`.trim();
+    }
+
+    function getLatencyState(ms) {
+        if (!Number.isFinite(ms)) {
+            return 'latency-unknown';
+        }
+
+        if (ms <= 350) {
+            return 'latency-good';
+        }
+
+        if (ms <= 850) {
+            return 'latency-warn';
+        }
+
+        return 'latency-bad';
+    }
+
+    let latencyCheckInFlight = false;
+    async function updateStreamLatency() {
+        if (!streamLatency || latencyCheckInFlight) {
+            return;
+        }
+
+        latencyCheckInFlight = true;
+        const started = performance.now();
+        const controller = new AbortController();
+        const timeout = window.setTimeout(() => controller.abort(), 4000);
+
+        try {
+            const response = await fetch(`${getStreamLatencyEndpoint()}?t=${Date.now()}`, {
+                cache: 'no-store',
+                signal: controller.signal
+            });
+            const elapsed = Math.round(performance.now() - started);
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(data.error || `HTTP ${response.status}`);
+            }
+
+            setStreamLatency(elapsed);
+            const upstreamMs = Number(data.upstreamMs);
+            streamLatency.title = Number.isFinite(upstreamMs)
+                ? `Estimated stream latency. Server to stream: ${Math.round(upstreamMs)} ms.`
+                : 'Estimated stream latency.';
+        } catch (error) {
+            setStreamLatency(null, 'latency-unknown');
+            streamLatency.title = 'Could not measure stream latency.';
+        } finally {
+            window.clearTimeout(timeout);
+            latencyCheckInFlight = false;
+        }
     }
 
     updateDisplay();
     fetch(`${API_ENDPOINT}?warm=1`, { cache: 'no-store' }).catch(() => {});
+    updateStreamLatency();
+    window.setInterval(updateStreamLatency, 5000);
     servoSlider.addEventListener('input', queueServoSend);
     if (leftBtn) leftBtn.addEventListener('click', () => moveTo(0));
     if (centerBtn) centerBtn.addEventListener('click', () => moveTo(50));
@@ -274,16 +340,24 @@ function initializeServoControls() {
 }
 
 function getServoApiEndpoint() {
+    return getBackendApiEndpoint('/api/servo');
+}
+
+function getStreamLatencyEndpoint() {
+    return getBackendApiEndpoint('/api/stream-latency');
+}
+
+function getBackendApiEndpoint(path) {
     const vercelApiEndpoint = 'https://project-a7soe.vercel.app/api/servo';
     const hostname = window.location.hostname;
     const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
     const isVercel = hostname.endsWith('.vercel.app');
 
     if (isLocal || isVercel) {
-        return '/api/servo';
+        return path;
     }
 
-    return vercelApiEndpoint;
+    return vercelApiEndpoint.replace('/api/servo', path);
 }
 
 function handleEntryClick(e) {

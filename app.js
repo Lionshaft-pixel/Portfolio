@@ -260,7 +260,7 @@ function initializeServoControls() {
 }
 
 function getServoApiEndpoint() {
-    const vercelApiEndpoint = 'https://portfolio-anukalp-s-projects.vercel.app/api/servo';
+    const vercelApiEndpoint = 'https://project-a7soe.vercel.app/api/servo';
     const hostname = window.location.hostname;
     const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
     const isVercel = hostname.endsWith('.vercel.app');

@@ -140,7 +140,7 @@ function initializeServoControls() {
         return;
     }
 
-    const API_ENDPOINT = '/api/servo';
+    const API_ENDPOINT = getServoApiEndpoint();
     const ERROR_SUFFIX = "I guess my website is broken for now, but dw, I'll fix it soon";
     const MIN_SEND_INTERVAL = 45;
     let inFlight = false;
@@ -257,6 +257,16 @@ function initializeServoControls() {
     if (leftBtn) leftBtn.addEventListener('click', () => moveTo(0));
     if (centerBtn) centerBtn.addEventListener('click', () => moveTo(50));
     if (rightBtn) rightBtn.addEventListener('click', () => moveTo(100));
+}
+
+function getServoApiEndpoint() {
+    const vercelApiEndpoint = 'https://portfolio-anukalp-s-projects.vercel.app/api/servo';
+
+    if (window.location.hostname.endsWith('github.io')) {
+        return vercelApiEndpoint;
+    }
+
+    return '/api/servo';
 }
 
 function handleEntryClick(e) {

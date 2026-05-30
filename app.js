@@ -134,6 +134,8 @@ function initializeServoControls() {
     const leftBtn = document.getElementById('leftBtn');
     const centerBtn = document.getElementById('centerBtn');
     const rightBtn = document.getElementById('rightBtn');
+    const syncStreamBtn = document.getElementById('syncStreamBtn');
+    const liveStream = document.getElementById('liveStream');
     const controlStatus = document.getElementById('controlStatus');
 
     if (!servoSlider || !angleDisplay || !controlStatus) {
@@ -251,12 +253,24 @@ function initializeServoControls() {
         queueServoSend();
     }
 
+    function syncLiveStream() {
+        if (!liveStream) {
+            return;
+        }
+
+        const streamUrl = new URL('https://noah.watch/stream');
+        streamUrl.searchParams.set('sync', String(Date.now()));
+        liveStream.src = streamUrl.toString();
+        setStatus('Stream synced to latest.', 'success');
+    }
+
     updateDisplay();
     fetch(`${API_ENDPOINT}?warm=1`, { cache: 'no-store' }).catch(() => {});
     servoSlider.addEventListener('input', queueServoSend);
     if (leftBtn) leftBtn.addEventListener('click', () => moveTo(0));
     if (centerBtn) centerBtn.addEventListener('click', () => moveTo(50));
     if (rightBtn) rightBtn.addEventListener('click', () => moveTo(100));
+    if (syncStreamBtn) syncStreamBtn.addEventListener('click', syncLiveStream);
 }
 
 function getServoApiEndpoint() {

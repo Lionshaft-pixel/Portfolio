@@ -27,13 +27,16 @@
         <section class="livestream-section">
             <h2 class="section-title">Live Servo Stream</h2>
             <div class="livestream-container">
-                <div class="livestream-wrapper">
-                    <img src="https://noah.watch/stream" alt="Live Stream" class="livestream-player" onerror="handleStreamError(this)">
+                <div class="livestream-panel">
+                    <div class="livestream-wrapper">
+                        <img id="liveStream" src="https://noah.watch/stream" alt="Live Stream" class="livestream-player" onerror="handleStreamError(this)">
+                    </div>
+                    <p class="stream-warning">Fast internet is required for the livestream.</p>
                 </div>
                 <div class="servo-controls">
                     <div class="control-group">
                         <label for="servoSlider">Sun Shield Servo</label>
-                        <p class="controls-info">Stream and authorized servo controls from noah.watch.</p>
+                        <p class="controls-info">Control my home servo motors</p>
                     </div>
                     <div class="control-group">
                         <div class="slider-header">
@@ -47,10 +50,8 @@
                         <button type="button" id="centerBtn" class="servo-button center">Center</button>
                         <button type="button" id="rightBtn" class="servo-button">Right</button>
                     </div>
+                    <button type="button" id="syncStreamBtn" class="servo-button sync-button">Sync</button>
                     <p id="controlStatus" class="control-status" role="status" aria-live="polite">Controls ready.</p>
-                    <a href="https://noah.watch/interactive" target="_blank" rel="noopener" class="view-direct-btn">
-                        Open original controls
-                    </a>
                 </div>
             </div>
         </section>

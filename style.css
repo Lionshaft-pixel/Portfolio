@@ -637,6 +637,7 @@
             cursor: pointer;
             transition: all 0.3s ease;
             font-size: 0.8rem;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .servo-button:hover {

@@ -136,66 +136,127 @@ function initializeServoControls() {
     const rightBtn = document.getElementById('rightBtn');
     const controlStatus = document.getElementById('controlStatus');
 
-    const API_ENDPOINT = 'https://noah.watch/api/servo';
+    if (!servoSlider || !angleDisplay || !controlStatus) {
+        return;
+    }
 
-    async function sendServoCommand(command) {
+    const API_ENDPOINT = '/api/servo';
+    const ERROR_SUFFIX = "I guess my website is broken for now, but dw, I'll fix it soon";
+    const MIN_SEND_INTERVAL = 45;
+    let inFlight = false;
+    let queuedValue = null;
+    let pendingTimer = null;
+    let lastSendStartedAt = 0;
+
+    function sliderValueToDisplayValue() {
+        const percent = Number(servoSlider.value || 0);
+        return Math.max(0, Math.min(100, percent)) / 100;
+    }
+
+    function sliderValueToServoValue() {
+        return sliderValueToDisplayValue() - 1;
+    }
+
+    function servoValueToDisplayValue(value) {
+        return Math.max(0, Math.min(1, value + 1));
+    }
+
+    function updateDisplay() {
+        angleDisplay.textContent = sliderValueToDisplayValue().toFixed(2);
+    }
+
+    function setStatus(message, type = '') {
+        controlStatus.textContent = message;
+        controlStatus.className = `control-status ${type}`.trim();
+    }
+
+    async function sendServoValue(value) {
         try {
-            controlStatus.textContent = 'Sending command...';
-            controlStatus.className = 'control-status';
+            setStatus(`Moving to ${servoValueToDisplayValue(value).toFixed(2)}...`);
             
             const response = await fetch(API_ENDPOINT, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(command),
-                credentials: 'include'
+                body: JSON.stringify({ value })
             });
 
-            const data = await response.json();
-            
-            if (response.ok && data.status === 'ok') {
-                controlStatus.textContent = '✓ Command sent successfully';
-                controlStatus.className = 'control-status success';
-                setTimeout(() => {
-                    controlStatus.textContent = '';
-                }, 2000);
-            } else {
-                throw new Error(data.status || 'Server error');
+            let data = {};
+            let rawText = '';
+            try {
+                rawText = await response.text();
+                data = rawText ? JSON.parse(rawText) : {};
+            } catch (error) {
+                data = {};
             }
+            
+            if (!response.ok) {
+                const source = data.source ? ` (${data.source})` : '';
+                const details = data.error || data.message || rawText || `HTTP ${response.status}`;
+                throw new Error(`${details}${source}`);
+            }
+
+            setStatus(data.message || 'Command sent successfully', 'success');
+            return true;
         } catch (error) {
-            controlStatus.textContent = `✗ Error: ${error.message}. I guess my website is broken for now, but dw, I'll fix it soon`;
-            controlStatus.className = 'control-status error';
+            setStatus(`Error: ${error.message}. ${ERROR_SUFFIX}`, 'error');
+            return false;
         }
     }
 
-    if (servoSlider) {
-        servoSlider.addEventListener('input', (e) => {
-            const angle = e.target.value;
-            angleDisplay.textContent = `${angle}°`;
-            sendServoCommand({ angle: parseInt(angle) });
-        });
+    function queueServoSend() {
+        updateDisplay();
+        dispatchServoValue(sliderValueToServoValue());
     }
 
-    if (leftBtn) {
-        leftBtn.addEventListener('click', () => {
-            sendServoCommand({ direction: 'left' });
-        });
+    function dispatchServoValue(value) {
+        queuedValue = value;
+
+        if (inFlight) {
+            setStatus(`Moving to ${servoValueToDisplayValue(value).toFixed(2)}...`);
+            return;
+        }
+
+        flushServoQueue();
     }
 
-    if (centerBtn) {
-        centerBtn.addEventListener('click', () => {
-            servoSlider.value = 90;
-            angleDisplay.textContent = '90°';
-            sendServoCommand({ angle: 90 });
-        });
+    function flushServoQueue() {
+        if (inFlight || queuedValue === null) {
+            return;
+        }
+
+        const delay = Math.max(0, MIN_SEND_INTERVAL - (Date.now() - lastSendStartedAt));
+
+        window.clearTimeout(pendingTimer);
+        pendingTimer = window.setTimeout(() => {
+            if (inFlight || queuedValue === null) {
+                return;
+            }
+
+            const value = queuedValue;
+            queuedValue = null;
+            inFlight = true;
+            lastSendStartedAt = Date.now();
+
+            sendServoValue(value).finally(() => {
+                inFlight = false;
+                flushServoQueue();
+            });
+        }, delay);
     }
 
-    if (rightBtn) {
-        rightBtn.addEventListener('click', () => {
-            sendServoCommand({ direction: 'right' });
-        });
+    function moveTo(percent) {
+        servoSlider.value = String(percent);
+        queueServoSend();
     }
+
+    updateDisplay();
+    fetch(`${API_ENDPOINT}?warm=1`, { cache: 'no-store' }).catch(() => {});
+    servoSlider.addEventListener('input', queueServoSend);
+    if (leftBtn) leftBtn.addEventListener('click', () => moveTo(0));
+    if (centerBtn) centerBtn.addEventListener('click', () => moveTo(50));
+    if (rightBtn) rightBtn.addEventListener('click', () => moveTo(100));
 }
 
 function handleEntryClick(e) {
@@ -235,9 +296,9 @@ function handleStreamError(img) {
         <div class="livestream-error-box">
             <i class="fas fa-exclamation-circle"></i>
             <h3>Stream Unavailable</h3>
-            <p>The livestream couldn't load due to cross-origin restrictions.</p>
-            <a href="https://noah.watch/interactive" target="_blank" class="view-direct-btn">
-                View Live Stream & Controls Directly →
+            <p>The livestream could not load. I guess my website is broken for now, but dw, I'll fix it soon</p>
+            <a href="https://noah.watch/interactive" target="_blank" rel="noopener" class="view-direct-btn">
+                View live stream and controls directly
             </a>
         </div>
     `;

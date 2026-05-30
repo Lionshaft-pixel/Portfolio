@@ -447,9 +447,9 @@
 
         .livestream-player {
             width: 100%;
-            aspect-ratio: 16 / 9;
-            border-radius: 12px;
-            border: 2px solid #333;
+            height: 100%;
+            display: block;
+            object-fit: cover;
         }
 
         .livestream-player-wrapper {
@@ -516,6 +516,15 @@
             font-size: 0.75rem;
             color: #666;
             margin: 0;
+        }
+
+        .slider-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            color: #aaa;
+            font-size: 0.85rem;
         }
 
         .servo-iframe {
@@ -659,6 +668,9 @@
 }
 
 .view-direct-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     margin-top: 1rem;
     padding: 0.75rem 1.5rem;
     background: #00d4ff;

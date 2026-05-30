@@ -27,19 +27,30 @@
         <section class="livestream-section">
             <h2 class="section-title">Live Servo Stream</h2>
             <div class="livestream-container">
-                <img src="https://noah.watch/stream" alt="Live Stream" class="livestream-player" onerror="handleStreamError(this)">
+                <div class="livestream-wrapper">
+                    <img src="https://noah.watch/stream" alt="Live Stream" class="livestream-player" onerror="handleStreamError(this)">
+                </div>
                 <div class="servo-controls">
                     <div class="control-group">
-                        <label>Servo Controls</label>
-                        <p class="controls-info">Using live controls from noah.watch</p>
+                        <label for="servoSlider">Sun Shield Servo</label>
+                        <p class="controls-info">Stream and authorized servo controls from noah.watch.</p>
                     </div>
-                    <iframe 
-                        src="https://noah.watch/interactive" 
-                        id="servoIframe"
-                        class="servo-iframe"
-                        title="Servo Controls"
-                        sandbox="allow-same-origin allow-scripts"
-                    ></iframe>
+                    <div class="control-group">
+                        <div class="slider-header">
+                            <span>Position</span>
+                            <span id="angleDisplay" class="angle-display">1.00</span>
+                        </div>
+                        <input type="range" id="servoSlider" class="servo-slider" min="0" max="100" value="100" step="1" aria-label="Servo position">
+                    </div>
+                    <div class="button-group">
+                        <button type="button" id="leftBtn" class="servo-button">Left</button>
+                        <button type="button" id="centerBtn" class="servo-button center">Center</button>
+                        <button type="button" id="rightBtn" class="servo-button">Right</button>
+                    </div>
+                    <p id="controlStatus" class="control-status" role="status" aria-live="polite">Controls ready.</p>
+                    <a href="https://noah.watch/interactive" target="_blank" rel="noopener" class="view-direct-btn">
+                        Open original controls
+                    </a>
                 </div>
             </div>
         </section>
@@ -65,7 +76,7 @@
         </section>
 
         <footer class="footer">
-            <p>© 2026 Lionshaft Made with <del>Love</del> FUCKING PAIN AND AGONY</p>
+            <p>(c) 2026 Lionshaft Made with <del>Love</del> FUCKING PAIN AND AGONY</p>
         </footer>
     </div>
     <script src="app.js"></script>

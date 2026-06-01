@@ -376,6 +376,138 @@
             color: var(--accent);
         }
 
+        .instagram-link:hover {
+            background: rgba(255, 48, 108, 0.12);
+            border-color: #ff306c;
+        }
+
+        .instagram-link i {
+            color: #ff306c;
+        }
+
+        .about-me-link {
+            background: #ffffff;
+            color: #0a0a0a;
+            border-color: #ffffff;
+            font-weight: 700;
+        }
+
+        .about-me-link i {
+            color: #0a0a0a;
+        }
+
+        .about-me-link:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #000000;
+            box-shadow: 0 0 18px rgba(0, 217, 255, 0.25);
+        }
+
+        .life-page {
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .life-container {
+            width: min(960px, 100%);
+            margin: 0 auto;
+            padding: 4rem 0;
+        }
+
+        .life-nav {
+            margin-bottom: 3rem;
+        }
+
+        .life-back {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .life-back:hover {
+            color: #ffffff;
+        }
+
+        .life-hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 180px;
+            gap: 2rem;
+            align-items: center;
+            padding-bottom: 3rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .life-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: clamp(2.8rem, 8vw, 5rem);
+            line-height: 1;
+            color: var(--accent);
+            margin-bottom: 1.2rem;
+        }
+
+        .life-intro {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 680px;
+        }
+
+        .life-photo {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.25);
+        }
+
+        .life-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .life-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .life-card h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .life-card p {
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .life-wide {
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 768px) {
+            .life-page {
+                padding: 1.25rem;
+            }
+
+            .life-hero {
+                grid-template-columns: 1fr;
+            }
+
+            .life-photo {
+                width: 140px;
+                height: 140px;
+            }
+
+            .life-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* Interactive click effects */
         .click-particle {
             position: absolute;

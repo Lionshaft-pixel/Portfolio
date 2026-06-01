@@ -4,42 +4,42 @@ const repositories = [
         description: "An AI Assistant for learning and explanations. Provides intelligent tutoring and detailed explanations across various subjects.",
         url: "uh-oh.html",
         icon: "fas fa-robot",
-        preview: "sparx_preview1.jpg"
+        preview: "assets/images/sparx_preview1.jpg"
     },
     {
         name: "UtilityStack",
         description: "The marketplace for unfinished projects. Turn your abandoned code into cash and give it a second life.",
         url: "https://glitchyn.online/uh-oh.html",
         icon: "fas fa-layer-group",
-        preview: "utilitystack_preview1.jpg"
+        preview: "assets/images/utilitystack_preview1.jpg"
     },
     {
         name: "Scalpel",
         description: "A powerful, browser-based bulk file renaming tool with a wide range of customization options.",
         url: "https://github.com/Lionshaft-pixel/Scalpel",
         icon: "fas fa-cut",
-        preview: "scalpel_preview1.jpg"
+        preview: "assets/images/scalpel_preview1.jpg"
     },
     {
         name: "Andromeda-Browser",
         description: "A modern, lightweight browser powered by Chromium with enhanced privacy features.",
         url: "https://glitchyn.online/uh-oh.html",
         icon: "fas fa-compass",
-        preview: "andromeda_preview1.jpg"
+        preview: "assets/images/andromeda_preview1.jpg"
     },
     {
         name: "Greeting Clock",
         description: "A page with live clock",
         url: "https://glitchyn.online/uh-oh.html",
         icon: "fas fa-clock",
-        preview: "greeting-clock_preview1.jpg"
+        preview: "assets/images/greeting-clock_preview1.jpg"
     },
     {
         name: "Terminal Calculator",
         description: "I made a simple commandline calculator built in Python. This project shows the evolution of my coding skills from beginner to pro level.",
         url: "https://github.com/Lionshaft-pixel/Terminal-Calculator",
         icon: "fas fa-calculator",
-        preview: "calculator_preview1.jpg"
+        preview: "assets/images/calculator_preview1.jpg"
     }
 ];
 

@@ -406,15 +406,121 @@
         .life-page {
             min-height: 100vh;
             padding: 2rem;
+            background:
+                linear-gradient(180deg, rgba(0, 217, 255, 0.06), transparent 280px),
+                var(--primary);
         }
 
         .life-container {
-            width: min(960px, 100%);
+            width: min(760px, 100%);
             margin: 0 auto;
             padding: 4rem 0;
         }
 
-        .life-nav {
+        .blog-home {
+            color: var(--text);
+        }
+
+        .blog-header {
+            display: grid;
+            grid-template-columns: 88px minmax(0, 1fr);
+            column-gap: 1.25rem;
+            row-gap: 0.65rem;
+            align-items: center;
+            margin-bottom: 3.5rem;
+        }
+
+        .blog-avatar {
+            grid-row: span 2;
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.85);
+            box-shadow: 0 0 22px rgba(0, 217, 255, 0.22);
+        }
+
+        .blog-title-main {
+            font-family: 'Montserrat', sans-serif;
+            font-size: clamp(2.5rem, 9vw, 4.4rem);
+            line-height: 0.95;
+            color: var(--accent);
+            margin: 0;
+        }
+
+        .blog-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.9rem;
+            align-items: center;
+        }
+
+        .blog-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .blog-links a:hover {
+            color: var(--accent);
+        }
+
+        .blog-posts {
+            border-top: 1px solid rgba(0, 217, 255, 0.22);
+            padding-top: 1.5rem;
+        }
+
+        .blog-posts-title {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .blog-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .blog-list li {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 1rem;
+            align-items: baseline;
+        }
+
+        .blog-list a,
+        .blog-empty span {
+            color: var(--text);
+            text-decoration: none;
+            font-family: 'Montserrat', sans-serif;
+            font-size: clamp(1.25rem, 4vw, 1.9rem);
+            font-weight: 800;
+            line-height: 1.1;
+        }
+
+        .blog-list a:hover {
+            color: var(--accent);
+        }
+
+        .blog-list time {
+            color: var(--accent);
+            font-size: 0.9rem;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+
+        .blog-empty span {
+            color: var(--text-secondary);
+        }
+
+        .blog-empty time {
+            color: #5f7580;
+        }
+
+        .post-nav {
             margin-bottom: 3rem;
         }
 
@@ -428,65 +534,34 @@
             color: #ffffff;
         }
 
-        .life-hero {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) 180px;
-            gap: 2rem;
-            align-items: center;
-            padding-bottom: 3rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        .post-header {
+            border-bottom: 1px solid rgba(0, 217, 255, 0.22);
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
 
-        .life-title {
+        .post-title {
             font-family: 'Montserrat', sans-serif;
-            font-size: clamp(2.8rem, 8vw, 5rem);
-            line-height: 1;
             color: var(--accent);
-            margin-bottom: 1.2rem;
+            font-size: clamp(2.2rem, 8vw, 4.2rem);
+            line-height: 1;
+            margin-bottom: 1rem;
         }
 
-        .life-intro {
+        .post-date {
             color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .post-content {
+            color: var(--text);
             font-size: 1.1rem;
-            max-width: 680px;
+            max-width: 68ch;
         }
 
-        .life-photo {
-            width: 180px;
-            height: 180px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #ffffff;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.25);
-        }
-
-        .life-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
-        }
-
-        .life-card {
-            background: var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 8px;
-            padding: 1.5rem;
-        }
-
-        .life-card h2 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 1.2rem;
-            margin-bottom: 0.75rem;
-        }
-
-        .life-card p {
-            color: var(--text-secondary);
-            margin: 0;
-        }
-
-        .life-wide {
-            grid-column: 1 / -1;
+        .post-content p {
+            margin-bottom: 1.25rem;
         }
 
         @media (max-width: 768px) {
@@ -494,17 +569,22 @@
                 padding: 1.25rem;
             }
 
-            .life-hero {
-                grid-template-columns: 1fr;
+            .life-container {
+                padding: 2.5rem 0;
             }
 
-            .life-photo {
-                width: 140px;
-                height: 140px;
+            .blog-header {
+                grid-template-columns: 68px minmax(0, 1fr);
             }
 
-            .life-grid {
+            .blog-avatar {
+                width: 68px;
+                height: 68px;
+            }
+
+            .blog-list li {
                 grid-template-columns: 1fr;
+                gap: 0.35rem;
             }
         }
 

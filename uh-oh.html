@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Uh-oh!</title>
     <link rel="stylesheet" href="assets/css/style.css">
+    <script src="assets/js/visitor-tracker.js" defer></script>
     <style> /* I'm writing css here because I'm too lazy to create another file. Go fuck yourself. */
         body {
             font-family: Arial, sans-serif;
@@ -64,7 +65,7 @@
 
             clickCount += 1;
 
-            if (clickCount >= 10) {
+            if (clickCount >= 5) {
                 hasTriggered = true;
                 kitty.style.display = 'none';
                 yawn.style.display = 'block';

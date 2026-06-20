@@ -10,13 +10,17 @@
     const USER_AGENT_DATA_TIMEOUT_MS = 900;
 
     function getVisitorApiEndpoint() {
-        const path = '/api/visitor-notify';
         const hostname = window.location.hostname;
         const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
         const isVercel = hostname.endsWith('.vercel.app');
+        const isNetlify = hostname.endsWith('.netlify.app') || hostname.endsWith('.netlify.com');
+
+        if (isNetlify) {
+            return '/.netlify/functions/visitor-notify';
+        }
 
         if (isLocal || isVercel) {
-            return path;
+            return '/api/visitor-notify';
         }
 
         return API_FALLBACK_ENDPOINT;

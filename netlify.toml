@@ -1,0 +1,9 @@
+[build]
+publish = "."
+functions = "netlify/functions"
+
+[[redirects]]
+from = "/api/visitor-notify"
+to = "/.netlify/functions/visitor-notify"
+status = 200
+force = true

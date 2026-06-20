@@ -15,61 +15,90 @@ const MAX_FIELD_VALUE_LENGTH = 1024;
 const MAX_TEXT_LENGTH = 400;
 const memoryCounters = new Map();
 
-module.exports = async function handler(req, res) {
-    const cors = applyCors(req, res);
-    res.setHeader('Cache-Control', 'no-store');
+exports.handler = async function handler(event) {
+    const origin = cleanOrigin(getHeader(event.headers, 'origin'));
+    const allowedOrigins = getAllowedOrigins(event);
+    const allowed = !origin || isOriginAllowed(origin, allowedOrigins, event);
 
-    if (req.method === 'OPTIONS') {
-        res.status(cors.allowed ? 204 : 403).end();
-        return;
+    const responseHeaders = {
+        'Cache-Control': 'no-store',
+        'Content-Type': 'application/json',
+        'Vary': 'Origin'
+    };
+
+    if (origin && allowed) {
+        responseHeaders['Access-Control-Allow-Origin'] = origin;
+    } else if (!origin) {
+        responseHeaders['Access-Control-Allow-Origin'] = '*';
     }
 
-    if (!cors.allowed) {
-        return res.status(403).json({
-            error: 'Origin is not allowed.',
-            source: 'visitor-notify-api',
-            debug: {
-                origin: req.headers.origin || '',
-                host: req.headers.host || '',
-                allowedOrigins: Array.from(getAllowedOrigins(req)).sort(),
-                isNetlifyHost: Boolean(req.headers.host && /netlify\.app|netlify\.com/i.test(req.headers.host))
-            }
-        });
+    if (event.httpMethod === 'OPTIONS') {
+        responseHeaders['Access-Control-Allow-Methods'] = 'POST,OPTIONS';
+        responseHeaders['Access-Control-Allow-Headers'] = 'Content-Type';
+
+        return {
+            statusCode: allowed ? 204 : 403,
+            headers: responseHeaders,
+            body: ''
+        };
     }
 
-    if (req.method !== 'POST') {
-        return res.status(405).json({
-            error: `Method ${req.method} not allowed. Use POST.`,
-            source: 'visitor-notify-api'
-        });
+    if (!allowed) {
+        return {
+            statusCode: 403,
+            headers: responseHeaders,
+            body: JSON.stringify({
+                error: 'Origin is not allowed.',
+                source: 'visitor-notify-netlify'
+            })
+        };
+    }
+
+    if (event.httpMethod !== 'POST') {
+        return {
+            statusCode: 405,
+            headers: responseHeaders,
+            body: JSON.stringify({
+                error: `Method ${event.httpMethod} not allowed. Use POST.`,
+                source: 'visitor-notify-netlify'
+            })
+        };
     }
 
     try {
-        const payload = await getRequestPayload(req);
-        const ip = getClientIp(req);
+        const payload = parseBody(event.body);
+        const ip = getClientIp(event);
 
         if (shouldIgnoreIp(ip)) {
-            return res.status(200).json({
-                ok: true,
-                ignored: true,
-                source: 'visitor-notify-api'
-            });
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify({
+                    ok: true,
+                    ignored: true,
+                    source: 'visitor-notify-netlify'
+                })
+            };
         }
 
-        const page = getPageInfo(payload.page);
+        const page = getPageInfo(payload.page || {});
         const client = payload.client || {};
         const counts = await incrementVisitCounters(ip, page.path);
-        const location = getVercelLocation(req);
+        const location = getLocationFromHeaders(event);
         const color = getColorForIp(ip);
 
         if (!process.env.DISCORD_WEBHOOK_URL) {
-            return res.status(200).json({
-                ok: false,
-                configured: false,
-                message: 'DISCORD_WEBHOOK_URL is not set.',
-                counts,
-                source: 'visitor-notify-api'
-            });
+            return {
+                statusCode: 200,
+                headers: responseHeaders,
+                body: JSON.stringify({
+                    ok: false,
+                    configured: false,
+                    message: 'DISCORD_WEBHOOK_URL is not set.',
+                    counts,
+                    source: 'visitor-notify-netlify'
+                })
+            };
         }
 
         const discordPayload = buildDiscordPayload({
@@ -91,53 +120,62 @@ module.exports = async function handler(req, res) {
 
         if (!discordResponse.ok) {
             const text = await discordResponse.text().catch(() => '');
-            return res.status(502).json({
-                error: 'Discord webhook request failed.',
-                discordStatus: discordResponse.status,
-                details: truncate(text, 300),
-                source: 'visitor-notify-api'
-            });
+            return {
+                statusCode: 502,
+                headers: responseHeaders,
+                body: JSON.stringify({
+                    error: 'Discord webhook request failed.',
+                    discordStatus: discordResponse.status,
+                    details: truncate(text, 300),
+                    source: 'visitor-notify-netlify'
+                })
+            };
         }
 
-        res.status(200).json({
-            ok: true,
-            counts,
-            source: 'visitor-notify-api'
-        });
+        return {
+            statusCode: 200,
+            headers: responseHeaders,
+            body: JSON.stringify({
+                ok: true,
+                counts,
+                source: 'visitor-notify-netlify'
+            })
+        };
     } catch (error) {
-        res.status(500).json({
-            error: error.message,
-            source: 'visitor-notify-api'
-        });
+        return {
+            statusCode: 500,
+            headers: responseHeaders,
+            body: JSON.stringify({
+                error: error.message,
+                source: 'visitor-notify-netlify'
+            })
+        };
     }
 };
 
-function applyCors(req, res) {
-    const origin = cleanOrigin(req.headers.origin || '');
-    const allowedOrigins = getAllowedOrigins(req);
-    const allowed = true;
+function getAllowedOrigins(event) {
+    const origins = new Set(DEFAULT_ALLOWED_ORIGINS);
+    const configured = splitCsv(process.env.VISITOR_ALLOWED_ORIGINS);
 
-    if (origin && allowed) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-    } else if (!origin) {
-        res.setHeader('Access-Control-Allow-Origin', '*');
+    configured.forEach((origin) => origins.add(cleanOrigin(origin)));
+
+    if (event.headers?.host) {
+        const host = event.headers.host;
+        origins.add(`https://${host}`);
+        origins.add(`http://${host}`);
     }
 
-    res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    res.setHeader('Vary', 'Origin');
-
-    return { allowed };
+    return new Set(Array.from(origins).filter(Boolean));
 }
 
-function isOriginAllowed(origin, allowedOrigins, req) {
+function isOriginAllowed(origin, allowedOrigins, event) {
     if (allowedOrigins.has(origin)) {
         return true;
     }
 
     try {
         const originHostname = new URL(origin).hostname.toLowerCase();
-        const requestHost = String(req.headers.host || '').toLowerCase();
+        const requestHost = String(event.headers?.host || '').toLowerCase();
         const requestHostname = requestHost.split(':')[0];
 
         return originHostname === requestHostname ||
@@ -156,65 +194,40 @@ function isOriginAllowed(origin, allowedOrigins, req) {
     }
 }
 
-function getAllowedOrigins(req) {
-    const origins = new Set(DEFAULT_ALLOWED_ORIGINS);
-    const configured = splitCsv(process.env.VISITOR_ALLOWED_ORIGINS);
-
-    configured.forEach((origin) => origins.add(cleanOrigin(origin)));
-
-    if (process.env.VERCEL_URL) {
-        origins.add(`https://${process.env.VERCEL_URL}`);
-    }
-
-    if (req.headers.host) {
-        const host = req.headers.host;
-        origins.add(`https://${host}`);
-
-        if (host.startsWith('localhost') || host.startsWith('127.0.0.1')) {
-            origins.add(`http://${host}`);
-        }
-    }
-
-    return new Set(Array.from(origins).filter(Boolean));
-}
-
 function cleanOrigin(origin) {
     return String(origin || '').replace(/\/+$/, '');
 }
 
-async function getRequestPayload(req) {
-    if (typeof req.body === 'string') {
-        return req.body ? JSON.parse(req.body) : {};
+function parseBody(body) {
+    if (!body) {
+        return {};
     }
 
-    if (req.body && typeof req.body === 'object') {
-        return req.body;
+    if (typeof body === 'object') {
+        return body;
     }
 
-    const raw = await readRequestBody(req);
-    return raw ? JSON.parse(raw) : {};
+    try {
+        return JSON.parse(body);
+    } catch (error) {
+        return {};
+    }
 }
 
-function readRequestBody(req) {
-    return new Promise((resolve, reject) => {
-        let body = '';
-
-        req.on('data', (chunk) => {
-            body += chunk;
-        });
-
-        req.on('end', () => resolve(body));
-        req.on('error', reject);
-    });
+function getHeader(headers = {}, key) {
+    const value = headers[key] || headers[key.toLowerCase()] || '';
+    return String(value || '');
 }
 
-function getClientIp(req) {
-    const forwardedFor = getHeader(req, 'x-forwarded-for');
+function getClientIp(event) {
+    const headers = event.headers || {};
+    const forwardedFor = getHeader(headers, 'x-forwarded-for');
     const candidates = [
-        getHeader(req, 'cf-connecting-ip'),
-        getHeader(req, 'x-real-ip'),
+        getHeader(headers, 'cf-connecting-ip'),
+        getHeader(headers, 'x-nf-client-connection-ip'),
+        getHeader(headers, 'x-real-ip'),
         forwardedFor ? forwardedFor.split(',')[0] : '',
-        req.socket?.remoteAddress || ''
+        getHeader(headers, 'client-ip')
     ];
 
     const ip = candidates
@@ -254,50 +267,38 @@ async function incrementVisitCounters(ip, pagePath) {
 }
 
 async function incrementCounter(key) {
-    const kv = getKvConfig();
-
-    if (kv) {
-        const response = await fetch(`${kv.url}/incr/${encodeURIComponent(key)}`, {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${kv.token}`
-            }
-        });
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-            throw new Error(data.error || `Counter storage failed: HTTP ${response.status}`);
-        }
-
-        return Number(data.result || 0);
-    }
-
     const nextValue = (memoryCounters.get(key) || 0) + 1;
     memoryCounters.set(key, nextValue);
     return nextValue;
 }
 
-function getKvConfig() {
-    const url = process.env.VISITOR_KV_REST_API_URL ||
-        process.env.KV_REST_API_URL ||
-        process.env.UPSTASH_REDIS_REST_URL;
-    const token = process.env.VISITOR_KV_REST_API_TOKEN ||
-        process.env.KV_REST_API_TOKEN ||
-        process.env.UPSTASH_REDIS_REST_TOKEN;
+function getLocationFromHeaders(event) {
+    const headers = event.headers || {};
+    return {
+        city: decodeHeader(getHeader(headers, 'x-nf-geo-city')),
+        region: decodeHeader(getHeader(headers, 'x-nf-geo-region')),
+        country: decodeHeader(getHeader(headers, 'x-nf-geo-country')),
+        timezone: decodeHeader(getHeader(headers, 'x-nf-geo-timezone')),
+        latitude: decodeHeader(getHeader(headers, 'x-nf-geo-latitude')),
+        longitude: decodeHeader(getHeader(headers, 'x-nf-geo-longitude'))
+    };
+}
 
-    if (!url || !token) {
-        return null;
+function decodeHeader(value) {
+    const text = String(value || '').trim();
+    if (!text) {
+        return '';
     }
 
-    return {
-        url: String(url).replace(/\/+$/, ''),
-        token
-    };
+    try {
+        return decodeURIComponent(text);
+    } catch (error) {
+        return text;
+    }
 }
 
 function getPageInfo(page = {}) {
     const path = truncate(cleanText(page.path || '/'), 220) || '/';
-
     return {
         title: truncate(cleanText(page.title || 'Untitled page'), 180),
         path,
@@ -309,7 +310,6 @@ function getPageInfo(page = {}) {
 function getSafeUrl(url) {
     try {
         const parsed = new URL(String(url || ''));
-
         if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
             return truncate(parsed.toString(), 500);
         }
@@ -318,38 +318,6 @@ function getSafeUrl(url) {
     }
 
     return '';
-}
-
-function getVercelLocation(req) {
-    const city = decodeHeader(getHeader(req, 'x-vercel-ip-city'));
-    const region = decodeHeader(getHeader(req, 'x-vercel-ip-country-region'));
-    const country = decodeHeader(getHeader(req, 'x-vercel-ip-country'));
-    const timezone = decodeHeader(getHeader(req, 'x-vercel-ip-timezone'));
-    const latitude = decodeHeader(getHeader(req, 'x-vercel-ip-latitude'));
-    const longitude = decodeHeader(getHeader(req, 'x-vercel-ip-longitude'));
-
-    return {
-        city,
-        region,
-        country,
-        timezone,
-        latitude,
-        longitude
-    };
-}
-
-function decodeHeader(value) {
-    const text = String(value || '').trim();
-
-    if (!text) {
-        return '';
-    }
-
-    try {
-        return decodeURIComponent(text);
-    } catch (error) {
-        return text;
-    }
 }
 
 function buildDiscordPayload({ ip, page, client, counts, location, color }) {
@@ -399,11 +367,7 @@ function createField(name, value, inline = false) {
 }
 
 function formatLocation(location) {
-    const parts = [
-        location.city,
-        location.region,
-        location.country
-    ].filter(Boolean);
+    const parts = [location.city, location.region, location.country].filter(Boolean);
     const lines = [];
 
     lines.push(parts.length ? parts.join(', ') : 'Unavailable');
@@ -462,17 +426,13 @@ function formatSeconds(seconds) {
     if (!Number.isFinite(seconds)) {
         return 'Unknown';
     }
-
     if (seconds === Infinity) {
         return 'Unknown';
     }
-
     const minutes = Math.round(seconds / 60);
-
     if (minutes < 60) {
         return `${minutes} min`;
     }
-
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
     return `${hours}h ${remainingMinutes}m`;
@@ -496,7 +456,6 @@ function formatLanguage(client = {}) {
 
 function detectBrowser(ua, userAgentData = {}) {
     const brandName = getBrowserFromBrands(userAgentData);
-
     if (brandName) {
         return brandName;
     }
@@ -512,7 +471,6 @@ function detectBrowser(ua, userAgentData = {}) {
 
     for (const [name, regex] of matchers) {
         const match = ua.match(regex);
-
         if (match) {
             return `${name} ${match[1]}`;
         }
@@ -545,114 +503,28 @@ function getBrowserFromBrands(userAgentData = {}) {
 }
 
 function detectOs(ua, client = {}) {
-    const platform = cleanText(client.userAgentData?.platform || client.platform || '');
-    const platformVersion = cleanText(client.userAgentData?.platformVersion || '');
-
-    if (platform) {
-        return platformVersion ? `${platform} ${platformVersion}` : platform;
+    const os = cleanText(client.platform || '');
+    if (os) {
+        return os;
     }
 
-    const matchers = [
-        ['Windows', /Windows NT ([\d.]+)/],
-        ['Android', /Android ([\d.]+)/],
-        ['iOS', /(iPhone|iPad|iPod).*OS ([\d_]+)/],
-        ['macOS', /Mac OS X ([\d_]+)/],
-        ['Linux', /Linux/]
-    ];
-
-    for (const [name, regex] of matchers) {
-        const match = ua.match(regex);
-
-        if (!match) {
-            continue;
-        }
-
-        const version = (match[2] || match[1] || '').replace(/_/g, '.');
-        return version && version !== name ? `${name} ${version}` : name;
+    if (/Windows/i.test(ua)) {
+        return 'Windows';
+    }
+    if (/Mac OS X/i.test(ua)) {
+        return 'macOS';
+    }
+    if (/Android/i.test(ua)) {
+        return 'Android';
+    }
+    if (/iPhone|iPad|iPod/i.test(ua)) {
+        return 'iOS';
+    }
+    if (/Linux/i.test(ua)) {
+        return 'Linux';
     }
 
     return 'Unknown';
-}
-
-function getColorForIp(ip) {
-    const hash = crypto.createHash('sha256').update(normalizeIp(ip)).digest();
-    const hue = Math.round(((hash[0] << 8) + hash[1]) / 65535 * 359);
-    const saturation = 68 + (hash[2] % 18);
-    const lightness = 45 + (hash[3] % 12);
-    const { r, g, b } = hslToRgb(hue, saturation / 100, lightness / 100);
-
-    return (r << 16) + (g << 8) + b;
-}
-
-function hslToRgb(h, s, l) {
-    const c = (1 - Math.abs(2 * l - 1)) * s;
-    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
-    const m = l - c / 2;
-    let r = 0;
-    let g = 0;
-    let b = 0;
-
-    if (h < 60) {
-        r = c;
-        g = x;
-    } else if (h < 120) {
-        r = x;
-        g = c;
-    } else if (h < 180) {
-        g = c;
-        b = x;
-    } else if (h < 240) {
-        g = x;
-        b = c;
-    } else if (h < 300) {
-        r = x;
-        b = c;
-    } else {
-        r = c;
-        b = x;
-    }
-
-    return {
-        r: Math.round((r + m) * 255),
-        g: Math.round((g + m) * 255),
-        b: Math.round((b + m) * 255)
-    };
-}
-
-function getHeader(req, name) {
-    const value = req.headers[name.toLowerCase()];
-
-    if (Array.isArray(value)) {
-        return value[0] || '';
-    }
-
-    return value || '';
-}
-
-function hashText(text) {
-    return crypto.createHash('sha256').update(String(text || '')).digest('hex').slice(0, 24);
-}
-
-function wrapCode(value) {
-    return `\`${String(value || '').replace(/`/g, '')}\``;
-}
-
-function cleanText(value) {
-    return String(value || '')
-        .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, ' ')
-        .replace(/[ \t]+/g, ' ')
-        .replace(/\n{3,}/g, '\n\n')
-        .trim();
-}
-
-function truncate(value, maxLength) {
-    const text = String(value || '');
-
-    if (text.length <= maxLength) {
-        return text;
-    }
-
-    return `${text.slice(0, Math.max(0, maxLength - 3))}...`;
 }
 
 function splitCsv(value) {
@@ -660,4 +532,32 @@ function splitCsv(value) {
         .split(',')
         .map((item) => item.trim())
         .filter(Boolean);
+}
+
+function truncate(text, maxLength) {
+    const value = cleanText(text);
+    if (value.length <= maxLength) {
+        return value;
+    }
+    return `${value.slice(0, maxLength - 1)}…`;
+}
+
+function cleanText(value) {
+    return String(value || '')
+        .replace(/[\u0000-\u001F\u007F]/g, '')
+        .trim();
+}
+
+function wrapCode(text) {
+    return `\`${cleanText(text || '')}\``;
+}
+
+function hashText(value) {
+    return crypto.createHash('sha256').update(String(value || '')).digest('hex');
+}
+
+function getColorForIp(ip) {
+    const base = hashText(ip || 'unknown');
+    const color = parseInt(base.slice(0, 6), 16) % 0xFFFFFF;
+    return color === 0 ? 1 : color;
 }
